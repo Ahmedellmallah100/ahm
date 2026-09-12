@@ -4,7 +4,7 @@ module Data_Memory (
 
 // Memory parameters
 parameter mem_width = 32;
-parameter mem_datapath_width = 64;
+parameter mem_datapath_width = 8;
 
 // Port declaration
 input clk, WE, areset;
