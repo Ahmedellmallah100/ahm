@@ -4,7 +4,7 @@ module Instruction_memory (
 
 // Memory parameters
 parameter mem_width = 32;
-parameter mem_depth = 64;
+parameter mem_depth = 32;
 
 // Port declaration
 input  [31:0] A;
