@@ -1,29 +1,33 @@
+`timescale 1ns / 1ps
+`default_nettype none
+
 module Data_Memory (
-    A, WD, clk, WE, RD, areset
+    input  wire        clk,
+    input  wire        WE,
+    input  wire        areset,
+    input  wire [31:0] A,
+    input  wire [31:0] WD,
+    output reg  [31:0] RD
 );
 
-// Memory parameters
-parameter mem_width = 32;
-parameter mem_datapath_width = 8;
+reg [31:0] mem [0:7];
 
-// Port declaration
-input clk, WE, areset;
-input [31:0] A, WD;
-output reg [31:0] RD;
 integer i;
 
-// Memory array
-reg [mem_width-1:0] mem [mem_datapath_width-1:0];
-
-// Read operation (Asynchronous)
-always @(*) begin
-    RD = mem[A[4:2]];     // Word aligned read
-end
-
-// Write operation (Synchronous)
 always @(posedge clk) begin
-    if (WE) begin
-        mem[A[31:2]] <= WD;
+    if (areset) begin
+        for (i = 0; i < 8; i = i + 1)
+            mem[i] <= 32'd0;
+    end
+    else if (WE) begin
+        mem[A[4:2]] <= WD;
     end
 end
-endmodule  // Data_Memory
+
+always @(*) begin
+    RD = mem[A[4:2]];
+end
+
+endmodule
+
+`default_nettype wire
