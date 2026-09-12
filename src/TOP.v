@@ -1,11 +1,13 @@
 module TOP (
-    clk, areset
+    clk, areset, PC, Result
 );
 
 // Port declaration
 input clk, areset;
+output [31:0] PC, Result;
+
 // Internal wires
-wire [31:0] PC, PC_Next;
+wire [31:0] PC_Next;
 wire [31:0] Instr;
 wire [2:0]  ALUControl;
 wire        ALUSrc, RegWrite, MemWrite, PCSrc;
@@ -16,7 +18,7 @@ wire signed [31:0] ImmExt;
 wire [31:0] SrcA, SrcB, SrcB_not_muxed;
 wire [31:0] ALuResult;
 wire [31:0] RD;
-wire [31:0] Result;
+
 // Instantiate PC
 PC pc_inst (
     .clk(clk),
