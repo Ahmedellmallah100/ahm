@@ -34,7 +34,7 @@ module tt_um_example (
 
     riscv_core core_inst (
         .clk    (clk),
-        .areset (rst_n),      // ← التصحيح هنا: توصيل مباشر بدون عكس
+        .areset (~rst_n),      // ← التصحيح هنا: توصيل مباشر بدون عكس
         .PC     (PC_out),
         .Result (Result_out)
     );
