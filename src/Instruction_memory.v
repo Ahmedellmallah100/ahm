@@ -15,7 +15,7 @@ reg [mem_width-1:0] mem [mem_depth-1:0];
 
 // Read operation (Asynchronous)
 always @(*) begin
-    RD = mem[A[31:2]];     // Word aligned
+    RD = mem[A[6:2]];     // Word aligned
 end
 
 // Initialize memory from file
