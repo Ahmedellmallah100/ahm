@@ -46,11 +46,11 @@ module tt_um_example (
     wire _unused = &{ena, ui_in[7:2], uio_in, 1'b0};
 
     //====================== التوب الأصلي (بعد التعديل) ============================
-    TOP core_inst (
+    //====================== التوب الأصلي (بعد التعديل) ============================
+    riscv_core core_inst (     // ← الاسم اتغيّر من TOP لـ riscv_core
         .clk    (clk),
         .areset (areset),
         .PC     (PC_out),
         .Result (Result_out)
     );
-
 endmodule
