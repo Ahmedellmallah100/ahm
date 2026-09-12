@@ -17,7 +17,7 @@ reg [mem_width-1:0] mem [mem_datapath_width-1:0];
 
 // Read operation (Asynchronous)
 always @(*) begin
-    RD = mem[A[31:2]];     // Word aligned read
+    RD = mem[A[4:2]];     // Word aligned read
 end
 
 // Write operation (Synchronous)
