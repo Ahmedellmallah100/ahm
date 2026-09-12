@@ -1,4 +1,4 @@
-module TOP (
+module riscv_core (
     clk, areset, PC, Result
 );
 
@@ -94,7 +94,8 @@ Data_Memory dm_inst (
     .WD(SrcB_not_muxed),
     .clk(clk),
     .WE(MemWrite),
-    .RD(RD)
+    .RD(RD),
+    .areset(areset)          // ← أضفنا التوصيلة الناقصة دي
 );
 // Instantiate Result Mux
 Mux result_mux_inst (
@@ -103,4 +104,4 @@ Mux result_mux_inst (
     .sel(ResultSrc),
     .out(Result)
 );
-endmodule  // TOP
+endmodule  // riscv_core
