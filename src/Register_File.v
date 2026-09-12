@@ -28,7 +28,7 @@ end
 always @(posedge clk) begin
     if (!areset) begin
         for (i = 0; i < mem_depth; i = i + 1) begin
-            mem[i] = 32'd0;
+            mem[i] <= 32'd0;
         end
     end else if (WE3 && (A3 != 5'd0)) begin
         mem[A3] <= WD3;
