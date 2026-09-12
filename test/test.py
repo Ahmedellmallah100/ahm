@@ -8,33 +8,58 @@ from cocotb.triggers import ClockCycles
 
 @cocotb.test()
 async def test_project(dut):
+
     dut._log.info("Start")
 
-    # Set the clock period to 10 us (100 KHz)
+    # Clock: 10 us period = 100 KHz
     clock = Clock(dut.clk, 10, unit="us")
     cocotb.start_soon(clock.start())
 
+    # -------------------------------------------------
     # Reset
+    # -------------------------------------------------
     dut._log.info("Reset")
+
     dut.ena.value = 1
     dut.ui_in.value = 0
     dut.uio_in.value = 0
+
+    # Active-low reset
     dut.rst_n.value = 0
+
     await ClockCycles(dut.clk, 10)
+
     dut.rst_n.value = 1
 
-    dut._log.info("Test project behavior")
+    # -------------------------------------------------
+    # Run RISC-V CPU
+    # -------------------------------------------------
 
-    # Set the input values you want to test
-    dut.ui_in.value = 20
-    dut.uio_in.value = 30
+    dut._log.info("Running RISC-V program")
 
-    # Wait for one clock cycle to see the output values
-    await ClockCycles(dut.clk, 1)
+    # Select Result_out[7:0]
+    #
+    # project.v:
+    # 00 -> PC[7:0]
+    # 01 -> PC[15:8]
+    # 10 -> Result[7:0]
+    # 11 -> Result[15:8]
+    #
+    dut.ui_in.value = 2
+    dut.uio_in.value = 0
 
-    # The following assersion is just an example of how to check the output values.
-    # Change it to match the actual expected output of your module:
-    assert dut.uo_out.value == 50
+    # Give the CPU enough cycles to execute the program
+    await ClockCycles(dut.clk, 30)
 
-    # Keep testing the module by changing the input values, waiting for
-    # one or more clock cycles, and asserting the expected output values.
+    # -------------------------------------------------
+    # Check output
+    # -------------------------------------------------
+
+    result = int(dut.uo_out.value)
+
+    dut._log.info(f"CPU Result = {result}")
+
+    # Expected result from the RISC-V program
+    assert result == 50, f"Expected 50, got {result}"
+
+    dut._log.info("RISC-V CPU test PASSED")
