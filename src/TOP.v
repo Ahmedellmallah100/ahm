@@ -19,6 +19,7 @@ wire [31:0] SrcB;
 wire [31:0] SrcB_not_muxed;
 
 wire [31:0] ImmExt;
+wire [1:0]  ImmSrc;
 
 wire [2:0] ALUControl;
 
@@ -46,11 +47,8 @@ wire [4:0] Rd;
 // ============================================================
 
 Instruction_memory im_inst (
-
-    .A({27'b0, InstrAddr, 2'b00}),
-
+    .A({25'b0, InstrAddr, 2'b00}),
     .RD(Instruction)
-
 );
 
 
@@ -59,9 +57,7 @@ Instruction_memory im_inst (
 // ============================================================
 
 assign Rs1 = Instruction[19:15];
-
 assign Rs2 = Instruction[24:20];
-
 assign Rd  = Instruction[11:7];
 
 
@@ -70,31 +66,24 @@ assign Rd  = Instruction[11:7];
 // ============================================================
 
 Control_Unit cu_inst (
-
     .opcode(Instruction[6:0]),
-
     .funct3(Instruction[14:12]),
-
     .funct7(Instruction[30]),
 
     .Zero(Zero),
-
     .sign_flag(sign_flag),
 
     .ALUControl(ALUControl),
-
     .ALUSrc(ALUSrc),
 
     .RegWrite(RegWrite_control),
-
     .MemWrite(MemWrite_control),
 
+    // Not used because instruction address is supplied externally
     .PCSrc(),
 
     .ResultSrc(ResultSrc),
-
     .ImmSrc(ImmSrc)
-
 );
 
 
@@ -103,7 +92,6 @@ Control_Unit cu_inst (
 // ============================================================
 
 assign RegWrite = RegWrite_control & Execute;
-
 assign MemWrite = MemWrite_control & Execute;
 
 
@@ -111,16 +99,10 @@ assign MemWrite = MemWrite_control & Execute;
 // Sign Extend
 // ============================================================
 
-wire [1:0] ImmSrc;
-
 Sign_extend se_inst (
-
     .Instr(Instruction[31:7]),
-
     .ImmExt(ImmExt),
-
     .ImmSrc(ImmSrc)
-
 );
 
 
@@ -129,44 +111,43 @@ Sign_extend se_inst (
 // ============================================================
 
 Register_File rf_inst (
-
-    .A1(Rs1),
-
-    .A2(Rs2),
-
-    .A3(Rd),
-
-    .WD3(Result),
-
     .clk(clk),
-
     .areset(areset),
 
-    .RD1(SrcA),
+    // ALU source registers
+    .A1(Rs1),
+    .A2(Rs2),
 
+    // Destination register
+    .A3(Rd),
+
+    // External register read
+    .ReadRegAddr(ReadRegAddr),
+
+    // Write data
+    .WD3(Result),
+
+    // Write enable
+    .WE3(RegWrite),
+
+    // Read ports for ALU
+    .RD1(SrcA),
     .RD2(SrcB_not_muxed),
 
-    .WE3(RegWrite)
-
+    // External register output
+    .ReadRegData(ReadRegData)
 );
 
 
-
-
 // ============================================================
-// ALU MUX
+// ALU input MUX
 // ============================================================
 
 Mux mux_alu_inst (
-
     .in0(SrcB_not_muxed),
-
     .in1(ImmExt),
-
     .sel(ALUSrc),
-
     .out(SrcB)
-
 );
 
 
@@ -175,19 +156,14 @@ Mux mux_alu_inst (
 // ============================================================
 
 ALU alu_inst (
-
     .SrcA(SrcA),
-
     .SrcB(SrcB),
-
     .ALUControl(ALUControl),
 
     .ALuResult(ALUResult),
 
     .zero_flag(Zero),
-
     .sign_flag(sign_flag)
-
 );
 
 
@@ -196,19 +172,14 @@ ALU alu_inst (
 // ============================================================
 
 Data_Memory dm_inst (
+    .clk(clk),
+    .WE(MemWrite),
+    .areset(areset),
 
     .A(ALUResult),
-
     .WD(SrcB_not_muxed),
 
-    .clk(clk),
-
-    .WE(MemWrite),
-
-    .RD(RD),
-
-    .areset(areset)
-
+    .RD(RD)
 );
 
 
@@ -217,17 +188,16 @@ Data_Memory dm_inst (
 // ============================================================
 
 Mux result_mux_inst (
-
     .in0(ALUResult),
-
     .in1(RD),
-
     .sel(ResultSrc),
-
     .out(Result)
-
 );
 
+
+// ============================================================
+// Memory Data Output
+// ============================================================
 
 assign MemoryData = RD;
 
