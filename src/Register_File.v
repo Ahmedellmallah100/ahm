@@ -17,21 +17,37 @@ module Register_File (
     output [31:0] ReadRegData
 );
 
-reg [31:0] mem [0:31];
+reg [31:0] mem [0:15];
 
-// Read ports
-assign RD1 = (A1 == 5'd0) ? 32'd0 : mem[A1];
+integer i;
 
-assign RD2 = (A2 == 5'd0) ? 32'd0 : mem[A2];
+// Read port 1
+assign RD1 =
+    (A1 == 5'd0) ? 32'd0 :
+    (A1 < 5'd16) ? mem[A1] :
+    32'd0;
+
+// Read port 2
+assign RD2 =
+    (A2 == 5'd0) ? 32'd0 :
+    (A2 < 5'd16) ? mem[A2] :
+    32'd0;
 
 // External read port
 assign ReadRegData =
-    (ReadRegAddr == 5'd0) ? 32'd0 : mem[ReadRegAddr];
+    (ReadRegAddr == 5'd0) ? 32'd0 :
+    (ReadRegAddr < 5'd16) ? mem[ReadRegAddr] :
+    32'd0;
 
 // Write port
 always @(posedge clk) begin
-    if (areset && WE3 && (A3 != 5'd0))
+    if (!areset) begin
+        for (i = 0; i < 16; i = i + 1)
+            mem[i] <= 32'd0;
+    end
+    else if (WE3 && (A3 != 5'd0) && (A3 < 5'd16)) begin
         mem[A3] <= WD3;
+    end
 end
 
 endmodule
