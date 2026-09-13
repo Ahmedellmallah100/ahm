@@ -44,6 +44,7 @@ wire [31:0] Instruction;
 wire [31:0] ALUResult;
 wire [31:0] ReadRegData;
 wire [31:0] MemoryData;
+wire [31:0] Result;
 
 
 // ============================================================
@@ -79,7 +80,7 @@ always @(*) begin
 
         // 00 = Result
         2'b00:
-            selected_data = ALUResult;
+            selected_data = Result;
 
         // 01 = Register Read
         2'b01:
