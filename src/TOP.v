@@ -169,7 +169,7 @@ Data_Memory dm_inst (
     .WE(MemWrite),
     .areset(areset),
 
-    .A(ALUResult[4:2]),
+    .A(ALUResult),
     .WD(SrcB_not_muxed),
 
     .RD(RD)
