@@ -17,7 +17,6 @@ project:
   source_files:
     - "project.v"
     - "TOP.v"
-    - "PC.v"
     - "Instruction_memory.v"
     - "Control_Unit.v"
     - "Sign_extend.v"
