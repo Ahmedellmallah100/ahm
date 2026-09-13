@@ -41,6 +41,9 @@ wire [4:0] Rs1;
 wire [4:0] Rs2;
 wire [4:0] Rd;
 
+// PCSrc is not used in this architecture
+wire PCSrc_unused;
+
 
 // ============================================================
 // Instruction Memory
@@ -79,8 +82,7 @@ Control_Unit cu_inst (
     .RegWrite(RegWrite_control),
     .MemWrite(MemWrite_control),
 
-    // Not used because instruction address is supplied externally
-    .PCSrc(),
+    .PCSrc(PCSrc_unused),
 
     .ResultSrc(ResultSrc),
     .ImmSrc(ImmSrc)
@@ -114,27 +116,19 @@ Register_File rf_inst (
     .clk(clk),
     .areset(areset),
 
-    // ALU source registers
     .A1(Rs1),
     .A2(Rs2),
-
-    // Destination register
     .A3(Rd),
 
-    // External register read
     .ReadRegAddr(ReadRegAddr),
 
-    // Write data
     .WD3(Result),
 
-    // Write enable
     .WE3(RegWrite),
 
-    // Read ports for ALU
     .RD1(SrcA),
     .RD2(SrcB_not_muxed),
 
-    // External register output
     .ReadRegData(ReadRegData)
 );
 
