@@ -1,19 +1,19 @@
 # Tiny Tapeout project information
 project:
-  title:        "Simple Single-Cycle RISC-V Core"   # عدّل العنوان زي ما تحب
-  author:       "ahmed"      # اكتب اسمك هنا
-  discord:      ""      # اكتب يوزر الديسكورد بتاعك هنا (اختياري)
-  description:  "A minimal single-cycle RISC-V CPU that runs a fixed program stored in instruction memory, exposing PC and Result on the output pins for observation"
+  title:        "Simple Single-Cycle RISC-V Core"
+  author:       "ahmed"
+  discord:      ""
+  description:  "A minimal single-cycle RISC-V CPU that runs a fixed program stored in instruction memory and provides instruction, register, ALU result, and memory data through selectable output pins"
   language:     "Verilog"
-  clock_hz:     0        # حط تردد الكلوك الفعلي بتاعك هنا لو معروف
+  clock_hz:     0
 
-  # How many tiles your design occupies? A single tile is about 167x108 uM.
-  tiles: "2x2"
+  # How many tiles your design occupies?
+  tiles: "1x1"
 
-  # Your top module name must start with "tt_um_". Make it unique by including your github username:
+  # Your top module name must start with "tt_um_".
   top_module:  "tt_um_example"
 
-  # List your project's source files here.
+  # List of your project's source files.
   source_files:
     - "project.v"
     - "TOP.v"
@@ -25,37 +25,40 @@ project:
     - "ALU.v"
     - "Data_Memory.v"
 
-# The pinout of your project. Leave unused pins blank. DO NOT delete or add any pins.
+
+# The pinout of your project.
 pinout:
+
   # Inputs
-  ui[0]: "sel[0] - observation select"
-  ui[1]: "sel[1] - observation select"
-  ui[2]: ""
-  ui[3]: ""
-  ui[4]: ""
-  ui[5]: ""
-  ui[6]: ""
-  ui[7]: ""
+  ui[0]: "InstrAddr[0]"
+  ui[1]: "InstrAddr[1]"
+  ui[2]: "InstrAddr[2]"
+  ui[3]: "InstrAddr[3]"
+  ui[4]: "InstrAddr[4]"
+  ui[5]: "Execute"
+  ui[6]: "output_select[0]"
+  ui[7]: "output_select[1]"
 
   # Outputs
-  uo[0]: "obs[0]"
-  uo[1]: "obs[1]"
-  uo[2]: "obs[2]"
-  uo[3]: "obs[3]"
-  uo[4]: "obs[4]"
-  uo[5]: "obs[5]"
-  uo[6]: "obs[6]"
-  uo[7]: "obs[7]"
+  uo[0]: "selected_data[0]"
+  uo[1]: "selected_data[1]"
+  uo[2]: "selected_data[2]"
+  uo[3]: "selected_data[3]"
+  uo[4]: "selected_data[4]"
+  uo[5]: "selected_data[5]"
+  uo[6]: "selected_data[6]"
+  uo[7]: "selected_data[7]"
 
   # Bidirectional pins
-  uio[0]: ""
-  uio[1]: ""
-  uio[2]: ""
-  uio[3]: ""
-  uio[4]: ""
+  uio[0]: "ReadRegAddr[0]"
+  uio[1]: "ReadRegAddr[1]"
+  uio[2]: "ReadRegAddr[2]"
+  uio[3]: "ReadRegAddr[3]"
+  uio[4]: "ReadRegAddr[4]"
   uio[5]: ""
   uio[6]: ""
   uio[7]: ""
+
 
 # Do not change!
 yaml_version: 6
