@@ -1,42 +1,167 @@
 module tt_um_example (
+
     input  wire [7:0] ui_in,
+
     output wire [7:0] uo_out,
+
     input  wire [7:0] uio_in,
+
     output wire [7:0] uio_out,
+
     output wire [7:0] uio_oe,
+
     input  wire       ena,
+
     input  wire       clk,
+
     input  wire       rst_n
+
 );
 
-    wire [31:0] PC_out;
-    wire [31:0] Result_out;
 
-    // rst_n و areset الاتنين active-low، فمحتاجينش أي عكس
-    // (شيلنا سطر assign areset = ~rst_n; خالص)
+// ============================================================
+// Inputs
+// ============================================================
 
-    reg [7:0] mux_out;
-    always @(*) begin
-        case (ui_in[1:0])
-            2'b00: mux_out = PC_out[7:0];
-            2'b01: mux_out = PC_out[15:8];
-            2'b10: mux_out = Result_out[7:0];
-            2'b11: mux_out = Result_out[15:8];
-            default: mux_out = 8'b0;
-        endcase
-    end
+// ui_in[4:0] = Instruction Address
+wire [4:0] instr_addr;
 
-    assign uo_out  = mux_out;
-    assign uio_out = 8'b0;
-    assign uio_oe  = 8'b0;
+assign instr_addr = ui_in[4:0];
 
-    wire _unused = &{ena, ui_in[7:2], uio_in, 1'b0};
 
-    riscv_core core_inst (
-        .clk    (clk),
-        .areset (rst_n),      // ← التصحيح هنا: توصيل مباشر بدون عكس
-        .PC     (PC_out),
-        .Result (Result_out)
-    );
+// ui_in[5] = Execute
+wire execute;
+
+assign execute = ui_in[5];
+
+
+// ui_in[7:6] = Output Select
+wire [1:0] output_select;
+
+assign output_select = ui_in[7:6];
+
+
+// uio_in[4:0] = Register Read Address
+wire [4:0] read_reg_addr;
+
+assign read_reg_addr = uio_in[4:0];
+
+
+// ============================================================
+// Core outputs
+// ============================================================
+
+wire [31:0] Instruction;
+wire [31:0] ALUResult;
+wire [31:0] ReadRegData;
+wire [31:0] MemoryData;
+wire [31:0] Result;
+
+
+// ============================================================
+// RISC-V Core
+// ============================================================
+
+riscv_core core_inst (
+
+    .clk(clk),
+
+    .areset(rst_n),
+
+    .InstrAddr(instr_addr),
+
+    .Execute(execute),
+
+    .ReadRegAddr(read_reg_addr),
+
+    .Instruction(Instruction),
+
+    .ALUResult(ALUResult),
+
+    .ReadRegData(ReadRegData),
+
+    .MemoryData(MemoryData),
+
+    .Result(Result)
+
+);
+
+
+// ============================================================
+// Output MUX
+// ============================================================
+
+reg [31:0] selected_data;
+
+always @(*) begin
+
+    case (output_select)
+
+        // 00 = ALU / Result
+        2'b00:
+            selected_data = Result;
+
+        // 01 = Register Read
+        2'b01:
+            selected_data = ReadRegData;
+
+        // 10 = Instruction
+        2'b10:
+            selected_data = Instruction;
+
+        // 11 = Memory Data
+        2'b11:
+            selected_data = MemoryData;
+
+        default:
+            selected_data = 32'b0;
+
+    endcase
+
+end
+
+
+// ============================================================
+// 32-bit → 8-bit output
+// ============================================================
+//
+// uio_in[7:6] is not used.
+// ui_in[7:6] selects data type.
+//
+// The current output gives the LOW 8 bits.
+//
+// Example:
+// x3 = 15
+//
+// uo_out = 8'h0F
+//
+
+assign uo_out = selected_data[7:0];
+
+
+// ============================================================
+// Bidirectional pins
+// ============================================================
+//
+// We use uio as INPUT only.
+//
+// Therefore OE = 0.
+//
+
+assign uio_out = 8'b0;
+
+assign uio_oe = 8'b0;
+
+
+// ============================================================
+// Unused signal
+// ============================================================
+
+wire _unused;
+
+assign _unused = &{
+    ena,
+    uio_in[7:5]
+};
 
 endmodule
