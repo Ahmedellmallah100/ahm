@@ -1,107 +1,242 @@
 module riscv_core (
-    clk, areset, PC, Result
+    input         clk,
+    input         areset,
+
+    input  [4:0]  InstrAddr,
+    input         Execute,
+
+    input  [4:0]  ReadRegAddr,
+
+    output [31:0] Instruction,
+    output [31:0] ALUResult,
+    output [31:0] ReadRegData,
+    output [31:0] MemoryData,
+    output [31:0] Result
 );
 
-// Port declaration
-input clk, areset;
-output [31:0] PC, Result;
+wire [31:0] SrcA;
+wire [31:0] SrcB;
+wire [31:0] SrcB_not_muxed;
 
-// Internal wires
-wire [31:0] PC_Next;
-wire [31:0] Instr;
-wire [2:0]  ALUControl;
-wire        ALUSrc, RegWrite, MemWrite, PCSrc;
-wire [1:0]  ImmSrc;
-wire        ResultSrc;
-wire        Zero, sign_flag;
-wire signed [31:0] ImmExt;
-wire [31:0] SrcA, SrcB, SrcB_not_muxed;
-wire [31:0] ALuResult;
+wire [31:0] ImmExt;
+
+wire [2:0] ALUControl;
+
+wire ALUSrc;
+wire RegWrite_control;
+wire MemWrite_control;
+
+wire RegWrite;
+wire MemWrite;
+
+wire ResultSrc;
+
+wire Zero;
+wire sign_flag;
+
 wire [31:0] RD;
 
-// Instantiate PC
-PC pc_inst (
-    .clk(clk),
-    .areset(areset),
-    .PC_Next(PC_Next),
-    .PC(PC),
-    .Load(1'b1)
-);
-// Instantiate Instruction Memory
+wire [4:0] Rs1;
+wire [4:0] Rs2;
+wire [4:0] Rd;
+
+
+// ============================================================
+// Instruction Memory
+// ============================================================
+
 Instruction_memory im_inst (
-    .A(PC),
-    .RD(Instr)
+
+    .A({27'b0, InstrAddr, 2'b00}),
+
+    .RD(Instruction)
+
 );
-// Instantiate Control Unit
+
+
+// ============================================================
+// Instruction fields
+// ============================================================
+
+assign Rs1 = Instruction[19:15];
+
+assign Rs2 = Instruction[24:20];
+
+assign Rd  = Instruction[11:7];
+
+
+// ============================================================
+// Control Unit
+// ============================================================
+
 Control_Unit cu_inst (
-    .opcode(Instr[6:0]),
-    .funct3(Instr[14:12]),
-    .funct7(Instr[30]),
-    .ALUControl(ALUControl),
-    .ALUSrc(ALUSrc),
-    .RegWrite(RegWrite),
-    .MemWrite(MemWrite),
-    .PCSrc(PCSrc),
-    .ImmSrc(ImmSrc),
-    .ResultSrc(ResultSrc),
+
+    .opcode(Instruction[6:0]),
+
+    .funct3(Instruction[14:12]),
+
+    .funct7(Instruction[30]),
+
     .Zero(Zero),
-    .sign_flag(sign_flag)
-);
-// Instantiate Sign Extend
-Sign_extend se_inst (
-    .Instr(Instr[31:7]),
-    .ImmExt(ImmExt),
-    .ImmSrc(ImmSrc)
-);
-// Instantiate Register File
-Register_File rf_inst (
-    .clk(clk),
-    .areset(areset),
-    .A1(Instr[19:15]),
-    .A2(Instr[24:20]),
-    .A3(Instr[11:7]),
-    .WD3(Result),
-    .WE3(RegWrite),
-    .RD1(SrcA),
-    .RD2(SrcB_not_muxed)
-);
-// Instantiate PC Mux
-Mux PC_mux_inst (
-    .in0(PC + 32'd4),
-    .in1(PC + ImmExt),
-    .sel(PCSrc),
-    .out(PC_Next)
-);
-// Instantiate ALU Mux
-Mux mux_alu_inst (
-    .in0(SrcB_not_muxed),
-    .in1(ImmExt),
-    .sel(ALUSrc),
-    .out(SrcB)
-);
-// Instantiate ALU
-ALU alu_inst (
+
+    .sign_flag(sign_flag),
+
     .ALUControl(ALUControl),
-    .SrcA(SrcA),
-    .SrcB(SrcB),
-    .ALuResult(ALuResult),
-    .zero_flag(Zero),
-    .sign_flag(sign_flag)
+
+    .ALUSrc(ALUSrc),
+
+    .RegWrite(RegWrite_control),
+
+    .MemWrite(MemWrite_control),
+
+    .PCSrc(),
+
+    .ResultSrc(ResultSrc),
+
+    .ImmSrc(ImmSrc)
+
 );
-// Instantiate Data Memory
-Data_Memory dm_inst (
-    .A(ALuResult),
-    .WD(SrcB_not_muxed),
+
+
+// ============================================================
+// Execute controls
+// ============================================================
+
+assign RegWrite = RegWrite_control & Execute;
+
+assign MemWrite = MemWrite_control & Execute;
+
+
+// ============================================================
+// Sign Extend
+// ============================================================
+
+wire [1:0] ImmSrc;
+
+Sign_extend se_inst (
+
+    .Instr(Instruction[31:7]),
+
+    .ImmExt(ImmExt),
+
+    .ImmSrc(ImmSrc)
+
+);
+
+
+// ============================================================
+// Register File
+// ============================================================
+
+Register_File rf_inst (
+
+    .A1(Rs1),
+
+    .A2(Rs2),
+
+    .A3(Rd),
+
+    .WD3(Result),
+
     .clk(clk),
+
+    .areset(areset),
+
+    .RD1(SrcA),
+
+    .RD2(SrcB_not_muxed),
+
+    .WE3(RegWrite)
+
+);
+
+
+// ============================================================
+// External Register Read
+// ============================================================
+
+assign ReadRegData =
+    (ReadRegAddr == 5'd0) ?
+    32'd0 :
+    rf_inst.mem[ReadRegAddr];
+
+
+// ============================================================
+// ALU MUX
+// ============================================================
+
+Mux mux_alu_inst (
+
+    .in0(SrcB_not_muxed),
+
+    .in1(ImmExt),
+
+    .sel(ALUSrc),
+
+    .out(SrcB)
+
+);
+
+
+// ============================================================
+// ALU
+// ============================================================
+
+ALU alu_inst (
+
+    .SrcA(SrcA),
+
+    .SrcB(SrcB),
+
+    .ALUControl(ALUControl),
+
+    .ALuResult(ALUResult),
+
+    .zero_flag(Zero),
+
+    .sign_flag(sign_flag)
+
+);
+
+
+// ============================================================
+// Data Memory
+// ============================================================
+
+Data_Memory dm_inst (
+
+    .A(ALUResult),
+
+    .WD(SrcB_not_muxed),
+
+    .clk(clk),
+
     .WE(MemWrite),
+
     .RD(RD),
-    .areset(areset)  
+
+    .areset(areset)
+
 );
-// Instantiate Result Mux
+
+
+// ============================================================
+// Result MUX
+// ============================================================
+
 Mux result_mux_inst (
-    .in0(ALuResult),
+
+    .in0(ALUResult),
+
     .in1(RD),
+
     .sel(ResultSrc),
+
     .out(Result)
+
 );
-endmodule  // riscv_core
+
+
+assign MemoryData = RD;
+
+endmodule
