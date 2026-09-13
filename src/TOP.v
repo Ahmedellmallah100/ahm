@@ -164,18 +164,16 @@ ALU alu_inst (
 // ============================================================
 // Data Memory
 // ============================================================
-
 Data_Memory dm_inst (
     .clk(clk),
     .WE(MemWrite),
     .areset(areset),
 
-    .A(ALUResult),
+    .A(ALUResult[4:2]),
     .WD(SrcB_not_muxed),
 
     .RD(RD)
 );
-
 
 // ============================================================
 // Result MUX
