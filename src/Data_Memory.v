@@ -8,14 +8,19 @@ module Data_Memory (
 );
 
 reg [31:0] mem [0:7];
-integer i;
 
 assign RD = mem[A[4:2]];
 
 always @(posedge clk) begin
     if (!areset) begin
-        for (i = 0; i < 8; i = i + 1)
-            mem[i] <= 32'd0;
+        mem[0] <= 32'd0;
+        mem[1] <= 32'd0;
+        mem[2] <= 32'd0;
+        mem[3] <= 32'd0;
+        mem[4] <= 32'd0;
+        mem[5] <= 32'd0;
+        mem[6] <= 32'd0;
+        mem[7] <= 32'd0;
     end
     else if (WE) begin
         mem[A[4:2]] <= WD;
