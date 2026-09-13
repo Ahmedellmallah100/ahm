@@ -19,8 +19,6 @@ module Register_File (
 
 reg [31:0] mem [0:31];
 
-integer i;
-
 // Read ports
 assign RD1 = (A1 == 5'd0) ? 32'd0 : mem[A1];
 
@@ -32,20 +30,8 @@ assign ReadRegData =
 
 // Write port
 always @(posedge clk) begin
-
-    if (!areset) begin
-
-        for (i = 0; i < 32; i = i + 1)
-            mem[i] <= 32'd0;
-
-    end
-
-    else if (WE3 && (A3 != 5'd0)) begin
-
+    if (areset && WE3 && (A3 != 5'd0))
         mem[A3] <= WD3;
-
-    end
-
 end
 
 endmodule
