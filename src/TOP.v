@@ -95,7 +95,7 @@ Data_Memory dm_inst (
     .clk(clk),
     .WE(MemWrite),
     .RD(RD),
-    .areset(areset)          // ← أضفنا التوصيلة الناقصة دي
+    .areset(areset)  
 );
 // Instantiate Result Mux
 Mux result_mux_inst (
