@@ -1,19 +1,18 @@
 module Mux (
-    in0, in1, sel, out  
+    input  [31:0] in0,
+    input  [31:0] in1,
+    input         sel,
+
+    output reg [31:0] out
 );
 
-// Port declaration
-input [31:0] in0, in1;
-input sel;
-output reg [31:0] out;
+always @(*) begin
 
-//  logic for Mux
-always @( *) begin
-    case (sel)
-        1'b0 : out = in0;
-        1'b1 : out = in1;
-    endcase
+    if (sel)
+        out = in1;
+    else
+        out = in0;
+
 end
 
-
-endmodule //Mux
+endmodule
