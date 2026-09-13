@@ -1,392 +1,131 @@
-module riscv_core (
-    input         clk,
-    input         areset,
+module tt_um_example (
+    input  wire [7:0] ui_in,
+    output wire [7:0] uo_out,
 
-    input  [4:0]  InstrAddr,
-    input         Execute,
+    input  wire [7:0] uio_in,
+    output wire [7:0] uio_out,
+    output wire [7:0] uio_oe,
 
-    input  [4:0]  ReadRegAddr,
-
-    output [31:0] Instruction,module riscv_core (
-    input         clk,
-    input         areset,
-
-    input  [4:0]  InstrAddr,
-    input         Execute,
-
-    input  [4:0]  ReadRegAddr,
-
-    output [31:0] Instruction,
-    output [31:0] ALUResult,
-    output [31:0] ReadRegData,
-    output [31:0] MemoryData,
-    output [31:0] Result
-);
-
-wire [31:0] SrcA;
-wire [31:0] SrcB;
-wire [31:0] SrcB_not_muxed;
-
-wire [31:0] ImmExt;
-wire [1:0]  ImmSrc;
-
-wire [2:0] ALUControl;
-
-wire ALUSrc;
-wire RegWrite_control;
-wire MemWrite_control;
-
-wire RegWrite;
-wire MemWrite;
-
-wire ResultSrc;
-
-wire Zero;
-wire sign_flag;
-
-wire [31:0] RD;
-
-wire [4:0] Rs1;
-wire [4:0] Rs2;
-wire [4:0] Rd;
-
-// PCSrc is not used in this architecture
-wire PCSrc_unused;
-
-
-// ============================================================
-// Instruction Memory
-// ============================================================
-
-Instruction_memory im_inst (
-    .A({25'b0, InstrAddr, 2'b00}),
-    .RD(Instruction)
+    input  wire ena,
+    input  wire clk,
+    input  wire rst_n
 );
 
 
 // ============================================================
-// Instruction fields
+// Inputs
 // ============================================================
 
-assign Rs1 = Instruction[19:15];
-assign Rs2 = Instruction[24:20];
-assign Rd  = Instruction[11:7];
+// ui_in[4:0] = Instruction Address
+wire [4:0] instr_addr;
+assign instr_addr = ui_in[4:0];
 
 
-// ============================================================
-// Control Unit
-// ============================================================
+// ui_in[5] = Execute
+wire execute;
+assign execute = ui_in[5];
 
-Control_Unit cu_inst (
-    .opcode(Instruction[6:0]),
-    .funct3(Instruction[14:12]),
-    .funct7(Instruction[30]),
 
-    .Zero(Zero),
-    .sign_flag(sign_flag),
+// ui_in[7:6] = Output Select
+wire [1:0] output_select;
+assign output_select = ui_in[7:6];
 
-    .ALUControl(ALUControl),
-    .ALUSrc(ALUSrc),
 
-    .RegWrite(RegWrite_control),
-    .MemWrite(MemWrite_control),
-
-    .PCSrc(PCSrc_unused),
-
-    .ResultSrc(ResultSrc),
-    .ImmSrc(ImmSrc)
-);
+// uio_in[4:0] = Register Read Address
+wire [4:0] read_reg_addr;
+assign read_reg_addr = uio_in[4:0];
 
 
 // ============================================================
-// Execute controls
+// Core outputs
 // ============================================================
 
-assign RegWrite = RegWrite_control & Execute;
-assign MemWrite = MemWrite_control & Execute;
-
-
-// ============================================================
-// Sign Extend
-// ============================================================
-
-Sign_extend se_inst (
-    .Instr(Instruction[31:7]),
-    .ImmExt(ImmExt),
-    .ImmSrc(ImmSrc)
-);
+wire [31:0] Instruction;
+wire [31:0] ALUResult;
+wire [31:0] ReadRegData;
+wire [31:0] MemoryData;
+wire [31:0] Result;
 
 
 // ============================================================
-// Register File
+// RISC-V Core
 // ============================================================
 
-Register_File rf_inst (
+riscv_core core_inst (
     .clk(clk),
-    .areset(areset),
+    .areset(rst_n),
 
-    .A1(Rs1),
-    .A2(Rs2),
-    .A3(Rd),
+    .InstrAddr(instr_addr),
+    .Execute(execute),
 
-    .ReadRegAddr(ReadRegAddr),
+    .ReadRegAddr(read_reg_addr),
 
-    .WD3(Result),
-
-    .WE3(RegWrite),
-
-    .RD1(SrcA),
-    .RD2(SrcB_not_muxed),
-
-    .ReadRegData(ReadRegData)
+    .Instruction(Instruction),
+    .ALUResult(ALUResult),
+    .ReadRegData(ReadRegData),
+    .MemoryData(MemoryData),
+    .Result(Result)
 );
 
 
 // ============================================================
-// ALU input MUX
+// Output MUX
 // ============================================================
 
-Mux mux_alu_inst (
-    .in0(SrcB_not_muxed),
-    .in1(ImmExt),
-    .sel(ALUSrc),
-    .out(SrcB)
-);
+reg [31:0] selected_data;
 
+always @(*) begin
 
-// ============================================================
-// ALU
-// ============================================================
+    case (output_select)
 
-ALU alu_inst (
-    .SrcA(SrcA),
-    .SrcB(SrcB),
-    .ALUControl(ALUControl),
+        // 00 = Result
+        2'b00:
+            selected_data = Result;
 
-    .ALuResult(ALUResult),
+        // 01 = Register Read
+        2'b01:
+            selected_data = ReadRegData;
 
-    .zero_flag(Zero),
-    .sign_flag(sign_flag)
-);
+        // 10 = Instruction
+        2'b10:
+            selected_data = Instruction;
 
+        // 11 = Memory Data
+        2'b11:
+            selected_data = MemoryData;
 
-// ============================================================
-// Data Memory
-// ============================================================
-Data_Memory dm_inst (
-    .clk(clk),
-    .WE(MemWrite),
-    .areset(areset),
+        default:
+            selected_data = 32'b0;
 
-    .A(ALUResult[4:2]),
-    .WD(SrcB_not_muxed),
+    endcase
 
-    .RD(RD)
-);
-
-// ============================================================
-// Result MUX
-// ============================================================
-
-Mux result_mux_inst (
-    .in0(ALUResult),
-    .in1(RD),
-    .sel(ResultSrc),
-    .out(Result)
-);
+end
 
 
 // ============================================================
-// Memory Data Output
+// 32-bit -> 8-bit output
 // ============================================================
 
-assign MemoryData = RD;
-
-endmodule
-
-    output [31:0] ALUResult,
-    output [31:0] ReadRegData,
-    output [31:0] MemoryData,
-    output [31:0] Result
-);
-
-wire [31:0] SrcA;
-wire [31:0] SrcB;
-wire [31:0] SrcB_not_muxed;
-
-wire [31:0] ImmExt;
-wire [1:0]  ImmSrc;
-
-wire [2:0] ALUControl;
-
-wire ALUSrc;
-wire RegWrite_control;
-wire MemWrite_control;
-
-wire RegWrite;
-wire MemWrite;
-
-wire ResultSrc;
-
-wire Zero;
-wire sign_flag;
-
-wire [31:0] RD;
-
-wire [4:0] Rs1;
-wire [4:0] Rs2;
-wire [4:0] Rd;
-
-// PCSrc is not used in this architecture
-wire PCSrc_unused;
+assign uo_out = selected_data[7:0];
 
 
 // ============================================================
-// Instruction Memory
+// Bidirectional pins
 // ============================================================
 
-Instruction_memory im_inst (
-    .A({25'b0, InstrAddr, 2'b00}),
-    .RD(Instruction)
-);
+assign uio_out = 8'b0;
+assign uio_oe  = 8'b0;
 
 
 // ============================================================
-// Instruction fields
+// Unused signals
 // ============================================================
 
-assign Rs1 = Instruction[19:15];
-assign Rs2 = Instruction[24:20];
-assign Rd  = Instruction[11:7];
+wire _unused;
 
-
-// ============================================================
-// Control Unit
-// ============================================================
-
-Control_Unit cu_inst (
-    .opcode(Instruction[6:0]),
-    .funct3(Instruction[14:12]),
-    .funct7(Instruction[30]),
-
-    .Zero(Zero),
-    .sign_flag(sign_flag),
-
-    .ALUControl(ALUControl),
-    .ALUSrc(ALUSrc),
-
-    .RegWrite(RegWrite_control),
-    .MemWrite(MemWrite_control),
-
-    .PCSrc(PCSrc_unused),
-
-    .ResultSrc(ResultSrc),
-    .ImmSrc(ImmSrc)
-);
-
-
-// ============================================================
-// Execute controls
-// ============================================================
-
-assign RegWrite = RegWrite_control & Execute;
-assign MemWrite = MemWrite_control & Execute;
-
-
-// ============================================================
-// Sign Extend
-// ============================================================
-
-Sign_extend se_inst (
-    .Instr(Instruction[31:7]),
-    .ImmExt(ImmExt),
-    .ImmSrc(ImmSrc)
-);
-
-
-// ============================================================
-// Register File
-// ============================================================
-
-Register_File rf_inst (
-    .clk(clk),
-    .areset(areset),
-
-    .A1(Rs1),
-    .A2(Rs2),
-    .A3(Rd),
-
-    .ReadRegAddr(ReadRegAddr),
-
-    .WD3(Result),
-
-    .WE3(RegWrite),
-
-    .RD1(SrcA),
-    .RD2(SrcB_not_muxed),
-
-    .ReadRegData(ReadRegData)
-);
-
-
-// ============================================================
-// ALU input MUX
-// ============================================================
-
-Mux mux_alu_inst (
-    .in0(SrcB_not_muxed),
-    .in1(ImmExt),
-    .sel(ALUSrc),
-    .out(SrcB)
-);
-
-
-// ============================================================
-// ALU
-// ============================================================
-
-ALU alu_inst (
-    .SrcA(SrcA),
-    .SrcB(SrcB),
-    .ALUControl(ALUControl),
-
-    .ALuResult(ALUResult),
-
-    .zero_flag(Zero),
-    .sign_flag(sign_flag)
-);
-
-
-// ============================================================
-// Data Memory
-// ============================================================
-Data_Memory dm_inst (
-    .clk(clk),
-    .WE(MemWrite),
-    .areset(areset),
-
-    .A(ALUResult),
-    .WD(SrcB_not_muxed),
-
-    .RD(RD)
-);
-
-// ============================================================
-// Result MUX
-// ============================================================
-
-Mux result_mux_inst (
-    .in0(ALUResult),
-    .in1(RD),
-    .sel(ResultSrc),
-    .out(Result)
-);
-
-
-// ============================================================
-// Memory Data Output
-// ============================================================
-
-assign MemoryData = RD;
+assign _unused = &{
+    ena,
+    uio_in[7:5]
+};
 
 endmodule
