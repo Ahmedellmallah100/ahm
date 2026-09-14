@@ -11,29 +11,45 @@ module tt_um_example (
     input wire rst_n
 );
 
-wire [4:0] instr_addr;
-assign instr_addr = ui_in[4:0];
+/* =========================
+   Execute
+   ========================= */
 
 wire execute;
 assign execute = ui_in[5];
 
+/* =========================
+   Output Select
+   ========================= */
+
 wire [1:0] output_select;
 assign output_select = ui_in[7:6];
+
+/* =========================
+   Register Read Address
+   ========================= */
 
 wire [4:0] read_reg_addr;
 assign read_reg_addr = uio_in[4:0];
 
+/* =========================
+   CPU Outputs
+   ========================= */
+
 wire [31:0] Instruction;
-wire [7:0] ALUResult;
-wire [7:0] ReadRegData;
-wire [7:0] MemoryData;
-wire [7:0] Result;
+wire [7:0]  ALUResult;
+wire [7:0]  ReadRegData;
+wire [7:0]  MemoryData;
+wire [7:0]  Result;
+
+/* =========================
+   RISC-V Core
+   ========================= */
 
 riscv_core core_inst (
     .clk(clk),
     .areset(rst_n),
 
-    .InstrAddr(instr_addr),
     .Execute(execute),
 
     .ReadRegAddr(read_reg_addr),
@@ -45,10 +61,13 @@ riscv_core core_inst (
     .Result(Result)
 );
 
+/* =========================
+   Output MUX
+   ========================= */
+
 reg [7:0] selected_data;
 
 always @(*) begin
-
     case (output_select)
 
         2'b00:
@@ -67,16 +86,18 @@ always @(*) begin
             selected_data = 8'b0;
 
     endcase
-
 end
 
 assign uo_out = selected_data;
+
+/* =========================
+   Unused IO
+   ========================= */
 
 assign uio_out = 8'b0;
 assign uio_oe  = 8'b0;
 
 wire _unused;
-
-assign _unused = &{ena, uio_in[7:5]};
+assign _unused = &{ena, ui_in[4:0], uio_in[7:5]};
 
 endmodule
