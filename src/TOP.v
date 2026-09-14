@@ -21,11 +21,19 @@ wire [7:0] SrcB;
 wire [7:0] SrcB_reg;
 wire [7:0] ImmExt;
 
+wire [7:0] StoreData;
+wire [7:0] LoadData;
+
 wire [2:0] ALUControl;
+
 wire ALUSrc;
 wire RegWrite_control;
 wire RegWrite;
 
+wire MemWrite_control;
+wire MemWrite;
+
+wire MemToReg;
 wire Branch;
 wire BranchTaken;
 
@@ -55,14 +63,14 @@ Control_Unit cu_inst (
     .ALUControl(ALUControl),
     .ALUSrc(ALUSrc),
     .RegWrite(RegWrite_control),
-    .MemWrite(),
-    .PCSrc(),
-    .ResultSrc(),
-    .ImmSrc(),
+    .MemWrite(MemWrite_control),
+    .MemToReg(MemToReg),
     .Branch(Branch)
 );
 
 assign RegWrite = RegWrite_control & Execute;
+
+assign MemWrite = MemWrite_control & Execute;
 
 
 /* =========================
@@ -71,14 +79,19 @@ assign RegWrite = RegWrite_control & Execute;
 
 /*
    I-Type:
-   ADDI / SLLI / SRLI
+   ADDI / LW / SLLI / SRLI
+
+   S-Type:
+   SW
 
    B-Type:
    BEQ
 */
 
 assign ImmExt =
+    /* B-Type */
     (Instruction[6:0] == 7'b1100011) ?
+
     {
         {1{Instruction[31]}},
         {1{Instruction[7]}},
@@ -86,14 +99,32 @@ assign ImmExt =
         Instruction[11:8],
         1'b0
     } :
+
+    /* S-Type */
+    (Instruction[6:0] == 7'b0100011) ?
+
+    {
+        {3{Instruction[31]}},
+        Instruction[31:25],
+        Instruction[11:7]
+    } :
+
+    /* Shift Immediate */
     (
-        (Instruction[14:12] == 3'b001 ||
-         Instruction[14:12] == 3'b101)
-        ?
-        {3'b000, Instruction[24:20]}
-        :
-        {{4{Instruction[31]}}, Instruction[27:20]}
-    );
+        Instruction[14:12] == 3'b001 ||
+        Instruction[14:12] == 3'b101
+    ) ?
+
+    {
+        3'b000,
+        Instruction[24:20]
+    } :
+
+    /* Normal I-Type */
+    {
+        {4{Instruction[31]}},
+        Instruction[27:20]
+    };
 
 
 /* =========================
@@ -110,7 +141,7 @@ Register_File rf_inst (
 
     .ReadRegAddr(ReadRegAddr),
 
-    .WD3(ALUResult),
+    .WD3(Result),
     .WE3(RegWrite),
 
     .RD1(SrcA),
@@ -123,7 +154,10 @@ Register_File rf_inst (
    ALU Input
    ========================= */
 
-assign SrcB = ALUSrc ? ImmExt[7:0] : SrcB_reg;
+assign SrcB =
+    ALUSrc ?
+    ImmExt[7:0] :
+    SrcB_reg;
 
 
 /* =========================
@@ -143,13 +177,38 @@ ALU alu_inst (
 
 
 /* =========================
-   Branch Comparison
+   Data Memory
    ========================= */
 
-/*
-   BEQ:
-   SrcA == SrcB_reg
-*/
+assign StoreData = SrcB_reg;
+
+Data_Memory data_mem_inst (
+    .clk(clk),
+    .areset(areset),
+
+    .A(ALUResult),
+    .WD(StoreData),
+    .WE(MemWrite),
+
+    .RD(LoadData)
+);
+
+assign MemoryData = LoadData;
+
+
+/* =========================
+   Write Back MUX
+   ========================= */
+
+assign Result =
+    MemToReg ?
+    LoadData :
+    ALUResult;
+
+
+/* =========================
+   Branch
+   ========================= */
 
 assign BranchTaken =
     Branch &&
@@ -162,15 +221,8 @@ assign BranchTaken =
 
 assign PC_Plus4 = PC + 32'd4;
 
-
-/*
-   Branch immediate is sign-extended
-   and added to current PC.
-*/
-
 assign BranchTarget =
     PC + {{24{ImmExt[7]}}, ImmExt};
-
 
 assign PC_Next =
     BranchTaken ?
@@ -185,8 +237,10 @@ assign PC_Next =
 PC pc_inst (
     .clk(clk),
     .areset(areset),
+
     .PC_Next(PC_Next),
     .PC(PC),
+
     .Load(Execute)
 );
 
@@ -199,19 +253,5 @@ Instruction_memory im_inst (
     .A(PC),
     .RD(Instruction)
 );
-
-
-/* =========================
-   Data Memory
-   ========================= */
-
-assign MemoryData = 8'b0;
-
-
-/* =========================
-   Result
-   ========================= */
-
-assign Result = ALUResult;
 
 endmodule
