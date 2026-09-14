@@ -11,17 +11,17 @@ project:
 
   top_module: "tt_um_example"
 
-  source_files:
-    - "project.v"
-    - "TOP.v"
-    - "PC.v"
-    - "Instruction_memory.v"
-    - "Control_Unit.v"
-    - "Register_File.v"
-    - "ALU.v"
-    - "Data_Memory.v"
-    - "Sign_extend.v"
-    - "Mux.v"
+source_files:
+  - "project.v"
+  - "TOP.v"
+  - "PC.v"
+  - "Instruction_memory.v"
+  - "Control_Unit.v"
+  - "Register_File.v"
+  - "ALU.v"
+  - "Data_Memory.v"
+  - "Sign_extend.v"
+  - "Mux.v"
 
 pinout:
   ui[0]: "unused"
