@@ -1,15 +1,15 @@
 module Register_File (
-    input         clk,
-    input         areset,
+    input clk,
+    input areset,
 
-    input  [4:0]  A1,
-    input  [4:0]  A2,
-    input  [4:0]  A3,
+    input  [4:0] A1,
+    input  [4:0] A2,
+    input  [4:0] A3,
 
-    input  [4:0]  ReadRegAddr,
+    input  [4:0] ReadRegAddr,
 
-    input  [7:0]  WD3,
-    input         WE3,
+    input  [7:0] WD3,
+    input WE3,
 
     output [7:0] RD1,
     output [7:0] RD2,
