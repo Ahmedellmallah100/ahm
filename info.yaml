@@ -7,29 +7,23 @@ project:
   language:     "Verilog"
   clock_hz:     0
 
-  # How many tiles your design occupies?
   tiles: "1x1"
 
-  # Your top module name must start with "tt_um_".
-  top_module:  "tt_um_example"
+  top_module: "tt_um_example"
 
-  # List of your project's source files.
-source_files:
-  - "project.v"
-  - "TOP.v"
-  - "PC.v"
-  - "Instruction_memory.v"
-  - "Control_Unit.v"
-  - "Register_File.v"
-  - "ALU.v"
-  - "Data_Memory.v"
-  - "Sign_extend.v"
-  - "Mux.v"
+  source_files:
+    - "project.v"
+    - "TOP.v"
+    - "PC.v"
+    - "Instruction_memory.v"
+    - "Control_Unit.v"
+    - "Register_File.v"
+    - "ALU.v"
+    - "Data_Memory.v"
+    - "Sign_extend.v"
+    - "Mux.v"
 
-# The pinout of your project.
 pinout:
-
-  # Inputs
   ui[0]: "unused"
   ui[1]: "unused"
   ui[2]: "unused"
@@ -39,7 +33,6 @@ pinout:
   ui[6]: "output_select[0]"
   ui[7]: "output_select[1]"
 
-  # Outputs
   uo[0]: "selected_data[0]"
   uo[1]: "selected_data[1]"
   uo[2]: "selected_data[2]"
@@ -49,15 +42,13 @@ pinout:
   uo[6]: "selected_data[6]"
   uo[7]: "selected_data[7]"
 
-  # Bidirectional pins
   uio[0]: "ReadRegAddr[0]"
   uio[1]: "ReadRegAddr[1]"
   uio[2]: "ReadRegAddr[2]"
   uio[3]: "ReadRegAddr[3]"
   uio[4]: "ReadRegAddr[4]"
-  uio[5]: ""
-  uio[6]: ""
-  uio[7]: ""
+  uio[5]: "unused"
+  uio[6]: "unused"
+  uio[7]: "unused"
 
-# Do not change!
 yaml_version: 6
