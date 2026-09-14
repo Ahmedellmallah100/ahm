@@ -17,7 +17,12 @@ wire [7:0] PC_Next;
 wire [7:0] SrcA;
 wire [7:0] SrcB;
 wire [7:0] SrcB_reg;
-wire [7:0] ImmExt;
+
+/* IMPORTANT:
+   ImmExt is assigned inside always block,
+   so it must be reg, not wire.
+*/
+reg  [7:0] ImmExt;
 
 wire [7:0] LoadData;
 
@@ -83,9 +88,10 @@ always @(*) begin
 
     case (Instruction[6:0])
 
-        /* BEQ
-           low 8 bits of B-immediate
-           offset is always aligned */
+        /* =====================
+           BEQ
+           ===================== */
+
         7'b1100011:
             ImmExt = {
                 Instruction[30:28],
@@ -93,8 +99,11 @@ always @(*) begin
                 1'b0
             };
 
-        /* SW
-           low 8 bits of S-immediate */
+
+        /* =====================
+           SW
+           ===================== */
+
         7'b0100011:
             ImmExt = {
                 Instruction[30:28],
@@ -102,19 +111,31 @@ always @(*) begin
                 1'b0
             };
 
-        /* SLLI / SRLI */
+
+        /* =====================
+           SLLI / SRLI
+           ===================== */
+
         7'b0010011:
             ImmExt = {
                 3'b000,
                 Instruction[24:20]
             };
 
-        /* LW */
+
+        /* =====================
+           LW
+           ===================== */
+
         7'b0000011:
             ImmExt = Instruction[27:20];
 
+
+        /* =====================
+           ADDI
+           ===================== */
+
         default:
-            /* ADDI */
             ImmExt = Instruction[27:20];
 
     endcase
