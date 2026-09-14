@@ -72,47 +72,29 @@ assign MemWrite = MemWrite_control & Execute;
 
 
 /* =========================
-   Immediate
+   Immediate Generator
    ========================= */
 
-always @(*) begin
-
-end
-
-/*
-   I-Type:
-   ADDI / LW
-
-   Shift:
-   SLLI / SRLI
-
-   S-Type:
-   SW
-
-   B-Type:
-   BEQ
-*/
-
 assign ImmExt =
-    /* B-Type */
+    /* B-Type : BEQ */
     (Instruction[6:0] == 7'b1100011) ?
     {
         {1{Instruction[31]}},
-        {1{Instruction[7]}},
+        Instruction[7],
         Instruction[30:25],
         Instruction[11:8],
         1'b0
     } :
 
-    /* S-Type */
+    /* S-Type : SW */
     (Instruction[6:0] == 7'b0100011) ?
     {
-        {3{Instruction[31]}},
+        {1{Instruction[31]}},
         Instruction[31:25],
         Instruction[11:7]
     } :
 
-    /* Shift Immediate */
+    /* Shift Immediate : SLLI / SRLI */
     (
         Instruction[14:12] == 3'b001 ||
         Instruction[14:12] == 3'b101
@@ -122,7 +104,7 @@ assign ImmExt =
         Instruction[24:20]
     } :
 
-    /* Normal I-Type */
+    /* I-Type : ADDI / LW */
     {
         {4{Instruction[31]}},
         Instruction[27:20]
@@ -207,7 +189,7 @@ assign Result =
 
 
 /* =========================
-   Branch
+   BEQ
    ========================= */
 
 assign BranchTaken =
