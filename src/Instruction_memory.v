@@ -43,6 +43,24 @@ always @(*) begin
         5'd11:
             RD = 32'hFFF00713; // ADDI x14, x0, -1
 
+        /*
+         * BEQ x1, x1, +8
+         *
+         * x1 == x1
+         * Branch is taken.
+         *
+         * PC jumps from this instruction
+         * to the instruction 2 positions ahead.
+         */
+        5'd12:
+            RD = 32'h00108463;
+
+        5'd13:
+            RD = 32'h00100693; // ADDI x13, x0, 1
+
+        5'd14:
+            RD = 32'h00200693; // ADDI x13, x0, 2
+
         default:
             RD = 32'h00000013; // NOP
 
