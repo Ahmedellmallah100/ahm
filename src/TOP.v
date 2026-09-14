@@ -11,6 +11,9 @@ module riscv_core (
     output [7:0]  Result
 );
 
+wire [31:0] PC;
+wire [31:0] PC_Next;
+
 wire [7:0] SrcA;
 wire [7:0] SrcB;
 wire [7:0] SrcB_reg;
@@ -25,27 +28,31 @@ wire [4:0] Rs1;
 wire [4:0] Rs2;
 wire [4:0] Rd;
 
+
 /* =========================
    Program Counter
    ========================= */
 
-reg [6:0] PC;
+assign PC_Next = PC + 32'd4;
 
-always @(posedge clk) begin
-    if (!areset)
-        PC <= 7'd0;
-    else if (Execute)
-        PC <= PC + 7'd4;
-end
+PC pc_inst (
+    .clk(clk),
+    .areset(areset),
+    .PC_Next(PC_Next),
+    .PC(PC),
+    .Load(Execute)
+);
+
 
 /* =========================
    Instruction Memory
    ========================= */
 
 Instruction_memory im_inst (
-    .A({25'b0, PC}),
+    .A(PC),
     .RD(Instruction)
 );
+
 
 /* =========================
    Register Addresses
@@ -54,6 +61,7 @@ Instruction_memory im_inst (
 assign Rs1 = Instruction[19:15];
 assign Rs2 = Instruction[24:20];
 assign Rd  = Instruction[11:7];
+
 
 /* =========================
    Control Unit
@@ -75,6 +83,7 @@ Control_Unit cu_inst (
 
 assign RegWrite = RegWrite_control & Execute;
 
+
 /* =========================
    Immediate
    ========================= */
@@ -84,6 +93,7 @@ assign ImmExt =
      Instruction[14:12] == 3'b101) ?
     {3'b000, Instruction[24:20]} :
     {{4{Instruction[31]}}, Instruction[27:20]};
+
 
 /* =========================
    Register File
@@ -107,11 +117,13 @@ Register_File rf_inst (
     .ReadRegData(ReadRegData)
 );
 
+
 /* =========================
    ALU Input
    ========================= */
 
 assign SrcB = ALUSrc ? ImmExt : SrcB_reg;
+
 
 /* =========================
    ALU
@@ -121,16 +133,24 @@ ALU alu_inst (
     .SrcA(SrcA),
     .SrcB(SrcB),
     .ALUControl(ALUControl),
+
     .ALuResult(ALUResult),
+
     .zero_flag(),
     .sign_flag()
 );
 
+
 /* =========================
-   No Data Memory yet
+   Data Memory
    ========================= */
 
 assign MemoryData = 8'b0;
+
+
+/* =========================
+   Result
+   ========================= */
 
 assign Result = ALUResult;
 
