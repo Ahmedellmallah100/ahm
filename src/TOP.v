@@ -1,6 +1,7 @@
 module riscv_core (
     input         clk,
     input         areset,
+
     input  [4:0]  InstrAddr,
     input         Execute,
     input  [4:0]  ReadRegAddr,
@@ -30,16 +31,10 @@ assign Rs1 = Instruction[19:15];
 assign Rs2 = Instruction[24:20];
 assign Rd  = Instruction[11:7];
 
-
-// Instruction Memory
-
 Instruction_memory im_inst (
     .A({25'b0, InstrAddr, 2'b00}),
     .RD(Instruction)
 );
-
-
-// Control Unit
 
 Control_Unit cu_inst (
     .opcode(Instruction[6:0]),
@@ -49,7 +44,6 @@ Control_Unit cu_inst (
     .ALUControl(ALUControl),
     .ALUSrc(ALUSrc),
     .RegWrite(RegWrite_control),
-
     .MemWrite(),
     .PCSrc(),
     .ResultSrc(),
@@ -58,19 +52,21 @@ Control_Unit cu_inst (
 
 assign RegWrite = RegWrite_control & Execute;
 
-
-// Immediate
+/*
+ * 8-bit immediate
+ *
+ * ADDI:
+ * low 8 bits of the 12-bit immediate
+ *
+ * SLLI/SRLI:
+ * 5-bit shift amount
+ */
 
 assign ImmExt =
     (Instruction[14:12] == 3'b001 ||
      Instruction[14:12] == 3'b101) ?
-
     {3'b000, Instruction[24:20]} :
-
-    {{4{Instruction[31]}}, Instruction[31:20]};
-
-
-// Register File
+    {{4{Instruction[31]}}, Instruction[27:20]};
 
 Register_File rf_inst (
     .clk(clk),
@@ -90,13 +86,7 @@ Register_File rf_inst (
     .ReadRegData(ReadRegData)
 );
 
-
-// ALU input
-
 assign SrcB = ALUSrc ? ImmExt : SrcB_reg;
-
-
-// ALU
 
 ALU alu_inst (
     .SrcA(SrcA),
@@ -107,13 +97,7 @@ ALU alu_inst (
     .sign_flag()
 );
 
-
-// No Data Memory
-
 assign MemoryData = 8'b0;
-
-
-// Result
 
 assign Result = ALUResult;
 
