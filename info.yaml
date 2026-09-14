@@ -15,15 +15,17 @@ project:
 
   # List of your project's source files.
   source_files:
-    - "project.v"
-    - "PC.v"
-    - "Instruction_memory.v"
-    - "Control_Unit.v"
-    - "Sign_extend.v"
-    - "Register_File.v"
-    - "Mux.v"
-    - "ALU.v"
-    - "Data_Memory.v"
+ source_files:
+  - "project.v"
+  - "TOP.v"
+  - "PC.v"
+  - "Instruction_memory.v"
+  - "Control_Unit.v"
+  - "Sign_extend.v"
+  - "Register_File.v"
+  - "Mux.v"
+  - "ALU.v"
+  - "Data_Memory.v"
 
 # The pinout of your project.
 pinout:
