@@ -3,7 +3,7 @@ project:
   title:        "Simple Single-Cycle RISC-V Core"
   author:       "ahmed"
   discord:      ""
-  description:  "A minimal single-cycle RISC-V CPU that runs a fixed program stored in instruction memory and provides instruction, register, ALU result, and memory data through selectable output pins"
+  description:  "A minimal single-cycle RISC-V CPU with an 8-bit datapath, 16 registers, and an internal program counter."
   language:     "Verilog"
   clock_hz:     0
 
@@ -14,29 +14,26 @@ project:
   top_module:  "tt_um_example"
 
   # List of your project's source files.
-source_files:
-  - "TOP.v"
-  - "project.v"
-  - "PC.v"
-  - "Instruction_memory.v"
-  - "Control_Unit.v"
-  - "Sign_extend.v"
-  - "Register_File.v"
-  - "Mux.v"
-  - "ALU.v"
-  - "Data_Memory.v"
-  
-
+  source_files:
+    - "project.v"
+    - "PC.v"
+    - "Instruction_memory.v"
+    - "Control_Unit.v"
+    - "Sign_extend.v"
+    - "Register_File.v"
+    - "Mux.v"
+    - "ALU.v"
+    - "Data_Memory.v"
 
 # The pinout of your project.
 pinout:
 
   # Inputs
-  ui[0]: "InstrAddr[0]"
-  ui[1]: "InstrAddr[1]"
-  ui[2]: "InstrAddr[2]"
-  ui[3]: "InstrAddr[3]"
-  ui[4]: "InstrAddr[4]"
+  ui[0]: "unused"
+  ui[1]: "unused"
+  ui[2]: "unused"
+  ui[3]: "unused"
+  ui[4]: "unused"
   ui[5]: "Execute"
   ui[6]: "output_select[0]"
   ui[7]: "output_select[1]"
@@ -60,7 +57,6 @@ pinout:
   uio[5]: ""
   uio[6]: ""
   uio[7]: ""
-
 
 # Do not change!
 yaml_version: 6
