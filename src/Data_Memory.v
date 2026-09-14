@@ -25,7 +25,7 @@ assign RD =
 
 
 /* =========================
-   Synchronous Write
+   Write
    ========================= */
 
 always @(posedge clk) begin
