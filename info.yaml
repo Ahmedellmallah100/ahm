@@ -1,27 +1,24 @@
-# Tiny Tapeout project information
 project:
-  title:        "Simple Single-Cycle RISC-V Core"
-  author:       "ahmed"
-  discord:      ""
-  description:  "A minimal single-cycle RISC-V CPU with an 8-bit datapath, 16 registers, and an internal program counter."
-  language:     "Verilog"
-  clock_hz:     0
-
+  title: "Simple Single-Cycle RISC-V Core"
+  author: "ahmed"
+  discord: ""
+  description: "A minimal single-cycle RISC-V CPU with an 8-bit datapath, 16 registers, and an internal program counter."
+  language: "Verilog"
+  clock_hz: 0
   tiles: "1x1"
-
   top_module: "tt_um_example"
 
-source_files:
-  - "project.v"
-  - "TOP.v"
-  - "PC.v"
-  - "Instruction_memory.v"
-  - "Control_Unit.v"
-  - "Register_File.v"
-  - "ALU.v"
-  - "Data_Memory.v"
-  - "Sign_extend.v"
-  - "Mux.v"
+  source_files:
+    - "project.v"
+    - "TOP.v"
+    - "PC.v"
+    - "Instruction_memory.v"
+    - "Control_Unit.v"
+    - "Register_File.v"
+    - "ALU.v"
+    - "Data_Memory.v"
+    - "Sign_extend.v"
+    - "Mux.v"
 
 pinout:
   ui[0]: "unused"
