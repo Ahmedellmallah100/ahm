@@ -9,13 +9,13 @@ module ALU (
 
 always @(*) begin
     case (ALUControl)
-        3'b000: ALuResult = SrcA + SrcB;          // ADD
-        3'b001: ALuResult = SrcA << SrcB[2:0];    // SLL
-        3'b010: ALuResult = SrcA - SrcB;          // SUB
-        3'b100: ALuResult = SrcA ^ SrcB;          // XOR
-        3'b101: ALuResult = SrcA >> SrcB[2:0];    // SRL
-        3'b110: ALuResult = SrcA | SrcB;          // OR
-        3'b111: ALuResult = SrcA & SrcB;          // AND
+        3'b000: ALuResult = SrcA + SrcB;        // ADD
+        3'b001: ALuResult = SrcA << SrcB[2:0];  // SLL
+        3'b010: ALuResult = SrcA - SrcB;        // SUB
+        3'b100: ALuResult = SrcA ^ SrcB;        // XOR
+        3'b101: ALuResult = SrcA >> SrcB[2:0];  // SRL
+        3'b110: ALuResult = SrcA | SrcB;        // OR
+        3'b111: ALuResult = SrcA & SrcB;        // AND
         default: ALuResult = 8'b0;
     endcase
 end
