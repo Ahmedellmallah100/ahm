@@ -13,8 +13,6 @@ module riscv_core (
 
 wire [31:0] PC;
 wire [31:0] PC_Next;
-wire [31:0] PC_Plus4;
-wire [31:0] BranchTarget;
 
 wire [7:0] SrcA;
 wire [7:0] SrcB;
@@ -27,14 +25,16 @@ wire [2:0] ALUControl;
 
 wire ALUSrc;
 wire RegWrite_control;
-wire RegWrite;
-
 wire MemWrite_control;
-wire MemWrite;
-
 wire MemToReg;
 wire Branch;
+
+wire RegWrite;
+wire MemWrite;
 wire BranchTaken;
+
+wire zero_flag;
+wire sign_flag;
 
 wire [4:0] Rs1;
 wire [4:0] Rs2;
@@ -76,25 +76,22 @@ assign MemWrite = MemWrite_control & Execute;
    ========================= */
 
 assign ImmExt =
-    /* B-Type : BEQ */
+    /* BEQ - B Type */
     (Instruction[6:0] == 7'b1100011) ?
     {
-        {1{Instruction[31]}},
-        Instruction[7],
         Instruction[30:25],
         Instruction[11:8],
-        1'b0
+        Instruction[7]
     } :
 
-    /* S-Type : SW */
+    /* SW - S Type */
     (Instruction[6:0] == 7'b0100011) ?
     {
-        {1{Instruction[31]}},
-        Instruction[31:25],
-        Instruction[11:7]
+        Instruction[31:28],
+        Instruction[11:8]
     } :
 
-    /* Shift Immediate : SLLI / SRLI */
+    /* SLLI / SRLI */
     (
         Instruction[14:12] == 3'b001 ||
         Instruction[14:12] == 3'b101
@@ -104,11 +101,8 @@ assign ImmExt =
         Instruction[24:20]
     } :
 
-    /* I-Type : ADDI / LW */
-    {
-        {4{Instruction[31]}},
-        Instruction[27:20]
-    };
+    /* ADDI / LW */
+    Instruction[27:20];
 
 
 /* =========================
@@ -138,10 +132,7 @@ Register_File rf_inst (
    ALU Input
    ========================= */
 
-assign SrcB =
-    ALUSrc ?
-    ImmExt :
-    SrcB_reg;
+assign SrcB = ALUSrc ? ImmExt : SrcB_reg;
 
 
 /* =========================
@@ -155,8 +146,8 @@ ALU alu_inst (
 
     .ALuResult(ALUResult),
 
-    .zero_flag(),
-    .sign_flag()
+    .zero_flag(zero_flag),
+    .sign_flag(sign_flag)
 );
 
 
@@ -182,38 +173,28 @@ assign MemoryData = LoadData;
    Write Back
    ========================= */
 
-assign Result =
-    MemToReg ?
-    LoadData :
-    ALUResult;
+assign Result = MemToReg ? LoadData : ALUResult;
 
 
 /* =========================
    BEQ
    ========================= */
 
-assign BranchTaken =
-    Branch &&
-    (SrcA == SrcB_reg);
+assign BranchTaken = Branch && zero_flag;
 
 
 /* =========================
    Program Counter
    ========================= */
 
-assign PC_Plus4 = PC + 32'd4;
-
-assign BranchTarget =
-    PC + {{24{ImmExt[7]}}, ImmExt};
-
 assign PC_Next =
     BranchTaken ?
-    BranchTarget :
-    PC_Plus4;
+    (PC + {{24{ImmExt[7]}}, ImmExt}) :
+    (PC + 32'd4);
 
 
 /* =========================
-   PC Module
+   PC
    ========================= */
 
 PC pc_inst (
