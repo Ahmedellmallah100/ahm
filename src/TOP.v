@@ -13,6 +13,8 @@ module riscv_core (
 
 wire [31:0] PC;
 wire [31:0] PC_Next;
+wire [31:0] PC_Plus4;
+wire [31:0] BranchTarget;
 
 wire [7:0] SrcA;
 wire [7:0] SrcB;
@@ -24,34 +26,12 @@ wire ALUSrc;
 wire RegWrite_control;
 wire RegWrite;
 
+wire Branch;
+wire BranchTaken;
+
 wire [4:0] Rs1;
 wire [4:0] Rs2;
 wire [4:0] Rd;
-
-
-/* =========================
-   Program Counter
-   ========================= */
-
-assign PC_Next = PC + 32'd4;
-
-PC pc_inst (
-    .clk(clk),
-    .areset(areset),
-    .PC_Next(PC_Next),
-    .PC(PC),
-    .Load(Execute)
-);
-
-
-/* =========================
-   Instruction Memory
-   ========================= */
-
-Instruction_memory im_inst (
-    .A(PC),
-    .RD(Instruction)
-);
 
 
 /* =========================
@@ -78,7 +58,8 @@ Control_Unit cu_inst (
     .MemWrite(),
     .PCSrc(),
     .ResultSrc(),
-    .ImmSrc()
+    .ImmSrc(),
+    .Branch(Branch)
 );
 
 assign RegWrite = RegWrite_control & Execute;
@@ -88,11 +69,31 @@ assign RegWrite = RegWrite_control & Execute;
    Immediate
    ========================= */
 
+/*
+   I-Type:
+   ADDI / SLLI / SRLI
+
+   B-Type:
+   BEQ
+*/
+
 assign ImmExt =
-    (Instruction[14:12] == 3'b001 ||
-     Instruction[14:12] == 3'b101) ?
-    {3'b000, Instruction[24:20]} :
-    {{4{Instruction[31]}}, Instruction[27:20]};
+    (Instruction[6:0] == 7'b1100011) ?
+    {
+        {1{Instruction[31]}},
+        {1{Instruction[7]}},
+        Instruction[30:25],
+        Instruction[11:8],
+        1'b0
+    } :
+    (
+        (Instruction[14:12] == 3'b001 ||
+         Instruction[14:12] == 3'b101)
+        ?
+        {3'b000, Instruction[24:20]}
+        :
+        {{4{Instruction[31]}}, Instruction[27:20]}
+    );
 
 
 /* =========================
@@ -122,7 +123,7 @@ Register_File rf_inst (
    ALU Input
    ========================= */
 
-assign SrcB = ALUSrc ? ImmExt : SrcB_reg;
+assign SrcB = ALUSrc ? ImmExt[7:0] : SrcB_reg;
 
 
 /* =========================
@@ -138,6 +139,65 @@ ALU alu_inst (
 
     .zero_flag(),
     .sign_flag()
+);
+
+
+/* =========================
+   Branch Comparison
+   ========================= */
+
+/*
+   BEQ:
+   SrcA == SrcB_reg
+*/
+
+assign BranchTaken =
+    Branch &&
+    (SrcA == SrcB_reg);
+
+
+/* =========================
+   Program Counter
+   ========================= */
+
+assign PC_Plus4 = PC + 32'd4;
+
+
+/*
+   Branch immediate is sign-extended
+   and added to current PC.
+*/
+
+assign BranchTarget =
+    PC + {{24{ImmExt[7]}}, ImmExt};
+
+
+assign PC_Next =
+    BranchTaken ?
+    BranchTarget :
+    PC_Plus4;
+
+
+/* =========================
+   PC Module
+   ========================= */
+
+PC pc_inst (
+    .clk(clk),
+    .areset(areset),
+    .PC_Next(PC_Next),
+    .PC(PC),
+    .Load(Execute)
+);
+
+
+/* =========================
+   Instruction Memory
+   ========================= */
+
+Instruction_memory im_inst (
+    .A(PC),
+    .RD(Instruction)
 );
 
 
