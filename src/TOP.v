@@ -21,7 +21,6 @@ wire [7:0] SrcB;
 wire [7:0] SrcB_reg;
 wire [7:0] ImmExt;
 
-wire [7:0] StoreData;
 wire [7:0] LoadData;
 
 wire [2:0] ALUControl;
@@ -69,7 +68,6 @@ Control_Unit cu_inst (
 );
 
 assign RegWrite = RegWrite_control & Execute;
-
 assign MemWrite = MemWrite_control & Execute;
 
 
@@ -77,9 +75,16 @@ assign MemWrite = MemWrite_control & Execute;
    Immediate
    ========================= */
 
+always @(*) begin
+
+end
+
 /*
    I-Type:
-   ADDI / LW / SLLI / SRLI
+   ADDI / LW
+
+   Shift:
+   SLLI / SRLI
 
    S-Type:
    SW
@@ -91,7 +96,6 @@ assign MemWrite = MemWrite_control & Execute;
 assign ImmExt =
     /* B-Type */
     (Instruction[6:0] == 7'b1100011) ?
-
     {
         {1{Instruction[31]}},
         {1{Instruction[7]}},
@@ -102,7 +106,6 @@ assign ImmExt =
 
     /* S-Type */
     (Instruction[6:0] == 7'b0100011) ?
-
     {
         {3{Instruction[31]}},
         Instruction[31:25],
@@ -114,7 +117,6 @@ assign ImmExt =
         Instruction[14:12] == 3'b001 ||
         Instruction[14:12] == 3'b101
     ) ?
-
     {
         3'b000,
         Instruction[24:20]
@@ -156,7 +158,7 @@ Register_File rf_inst (
 
 assign SrcB =
     ALUSrc ?
-    ImmExt[7:0] :
+    ImmExt :
     SrcB_reg;
 
 
@@ -180,14 +182,12 @@ ALU alu_inst (
    Data Memory
    ========================= */
 
-assign StoreData = SrcB_reg;
-
 Data_Memory data_mem_inst (
     .clk(clk),
     .areset(areset),
 
     .A(ALUResult),
-    .WD(StoreData),
+    .WD(SrcB_reg),
     .WE(MemWrite),
 
     .RD(LoadData)
@@ -197,7 +197,7 @@ assign MemoryData = LoadData;
 
 
 /* =========================
-   Write Back MUX
+   Write Back
    ========================= */
 
 assign Result =
