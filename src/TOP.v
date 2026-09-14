@@ -6,21 +6,20 @@ module riscv_core (
     input  [4:0]  ReadRegAddr,
 
     output [31:0] Instruction,
-    output [31:0] ALUResult,
-    output [31:0] ReadRegData,
-    output [31:0] MemoryData,
-    output [31:0] Result
+    output [7:0]  ALUResult,
+    output [7:0]  ReadRegData,
+    output [7:0]  MemoryData,
+    output [7:0]  Result
 );
 
-wire [31:0] SrcA;
-wire [31:0] SrcB;
-wire [31:0] SrcB_reg;
-wire [31:0] ImmExt;
+wire [7:0] SrcA;
+wire [7:0] SrcB;
+wire [7:0] SrcB_reg;
+wire [7:0] ImmExt;
 
 wire [2:0] ALUControl;
 wire ALUSrc;
 wire RegWrite_control;
-
 wire RegWrite;
 
 wire [4:0] Rs1;
@@ -32,9 +31,7 @@ assign Rs2 = Instruction[24:20];
 assign Rd  = Instruction[11:7];
 
 
-// ==================================================
 // Instruction Memory
-// ==================================================
 
 Instruction_memory im_inst (
     .A({25'b0, InstrAddr, 2'b00}),
@@ -42,9 +39,7 @@ Instruction_memory im_inst (
 );
 
 
-// ==================================================
 // Control Unit
-// ==================================================
 
 Control_Unit cu_inst (
     .opcode(Instruction[6:0]),
@@ -64,22 +59,18 @@ Control_Unit cu_inst (
 assign RegWrite = RegWrite_control & Execute;
 
 
-// ==================================================
-// Immediate Generator
-// ==================================================
+// Immediate
 
 assign ImmExt =
     (Instruction[14:12] == 3'b001 ||
      Instruction[14:12] == 3'b101) ?
 
-    {27'b0, Instruction[24:20]} :
+    {3'b000, Instruction[24:20]} :
 
-    {{20{Instruction[31]}}, Instruction[31:20]};
+    {{4{Instruction[31]}}, Instruction[31:20]};
 
 
-// ==================================================
 // Register File
-// ==================================================
 
 Register_File rf_inst (
     .clk(clk),
@@ -100,16 +91,12 @@ Register_File rf_inst (
 );
 
 
-// ==================================================
-// ALU input MUX
-// ==================================================
+// ALU input
 
 assign SrcB = ALUSrc ? ImmExt : SrcB_reg;
 
 
-// ==================================================
 // ALU
-// ==================================================
 
 ALU alu_inst (
     .SrcA(SrcA),
@@ -121,16 +108,12 @@ ALU alu_inst (
 );
 
 
-// ==================================================
 // No Data Memory
-// ==================================================
 
-assign MemoryData = 32'b0;
+assign MemoryData = 8'b0;
 
 
-// ==================================================
 // Result
-// ==================================================
 
 assign Result = ALUResult;
 
