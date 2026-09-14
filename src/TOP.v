@@ -2,7 +2,7 @@ module riscv_core (
     input         clk,
     input         areset,
     input         Execute,
-    input  [4:0]  ReadRegAddr,
+    input  [4:0]   ReadRegAddr,
 
     output [31:0] Instruction,
     output [7:0]  ALUResult,
@@ -11,8 +11,8 @@ module riscv_core (
     output [7:0]  Result
 );
 
-wire [31:0] PC;
-wire [31:0] PC_Next;
+wire [7:0] PC;
+wire [7:0] PC_Next;
 
 wire [7:0] SrcA;
 wire [7:0] SrcB;
@@ -34,7 +34,6 @@ wire MemWrite;
 wire BranchTaken;
 
 wire zero_flag;
-wire sign_flag;
 
 wire [4:0] Rs1;
 wire [4:0] Rs2;
@@ -67,6 +66,11 @@ Control_Unit cu_inst (
     .Branch(Branch)
 );
 
+
+/* =========================
+   Execute Enable
+   ========================= */
+
 assign RegWrite = RegWrite_control & Execute;
 assign MemWrite = MemWrite_control & Execute;
 
@@ -75,34 +79,47 @@ assign MemWrite = MemWrite_control & Execute;
    Immediate Generator
    ========================= */
 
-assign ImmExt =
-    /* BEQ - B Type */
-    (Instruction[6:0] == 7'b1100011) ?
-    {
-        Instruction[30:25],
-        Instruction[11:8],
-        Instruction[7]
-    } :
+always @(*) begin
 
-    /* SW - S Type */
-    (Instruction[6:0] == 7'b0100011) ?
-    {
-        Instruction[31:28],
-        Instruction[11:8]
-    } :
+    case (Instruction[6:0])
 
-    /* SLLI / SRLI */
-    (
-        Instruction[14:12] == 3'b001 ||
-        Instruction[14:12] == 3'b101
-    ) ?
-    {
-        3'b000,
-        Instruction[24:20]
-    } :
+        /* BEQ
+           low 8 bits of B-immediate
+           offset is always aligned */
+        7'b1100011:
+            ImmExt = {
+                Instruction[30:28],
+                Instruction[11:8],
+                1'b0
+            };
 
-    /* ADDI / LW */
-    Instruction[27:20];
+        /* SW
+           low 8 bits of S-immediate */
+        7'b0100011:
+            ImmExt = {
+                Instruction[30:28],
+                Instruction[11:8],
+                1'b0
+            };
+
+        /* SLLI / SRLI */
+        7'b0010011:
+            ImmExt = {
+                3'b000,
+                Instruction[24:20]
+            };
+
+        /* LW */
+        7'b0000011:
+            ImmExt = Instruction[27:20];
+
+        default:
+            /* ADDI */
+            ImmExt = Instruction[27:20];
+
+    endcase
+
+end
 
 
 /* =========================
@@ -147,7 +164,8 @@ ALU alu_inst (
     .ALuResult(ALUResult),
 
     .zero_flag(zero_flag),
-    .sign_flag(sign_flag)
+
+    .sign_flag()
 );
 
 
@@ -180,17 +198,17 @@ assign Result = MemToReg ? LoadData : ALUResult;
    BEQ
    ========================= */
 
-assign BranchTaken = Branch && zero_flag;
+assign BranchTaken = Branch & zero_flag;
 
 
 /* =========================
-   Program Counter
+   Next PC
    ========================= */
 
 assign PC_Next =
     BranchTaken ?
-    (PC + {{24{ImmExt[7]}}, ImmExt}) :
-    (PC + 32'd4);
+    (PC + ImmExt) :
+    (PC + 8'd4);
 
 
 /* =========================
@@ -213,7 +231,7 @@ PC pc_inst (
    ========================= */
 
 Instruction_memory im_inst (
-    .A(PC),
+    .A({24'b0, PC}),
     .RD(Instruction)
 );
 
