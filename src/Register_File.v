@@ -42,7 +42,7 @@ assign RD2 =
 
 
 /* =========================
-   External Register Read
+   External Read
    ========================= */
 
 assign ReadRegData =
@@ -52,7 +52,7 @@ assign ReadRegData =
 
 
 /* =========================
-   Write Port
+   Write
    ========================= */
 
 always @(posedge clk or negedge areset) begin
